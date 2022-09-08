@@ -1,0 +1,38 @@
+---
+- name: Ansible HomeWork playbook for deploying webserver
+  hosts: all
+  vars:
+    page_data:
+      ec2-54-183-189-25.us-west-1.compute.amazonaws.com: "index1.html"
+      ec2-54-67-92-71.us-west-1.compute.amazonaws.com: "index2.html"
+  tasks:
+    
+    - name: Install apache2 package
+      apt:
+        name: apache2
+        state: latest
+
+    - name: apache2 config modification to listen on port 8080
+      lineinfile:
+        path: /etc/apache2/ports.conf
+        regexp: "^Listen 80"
+        line: "Listen 8080"
+        state: present
+
+    - name: modify default config to listen to port 8080
+      lineinfile:
+        path: /etc/apache2/sites-enabled/000-default.conf
+        regexp: '^<VirtualHost \*:80>'
+        line: '<VirtualHost *:8080>'
+        state: present
+    
+    - name: Start and enable apache2 service
+      service:
+        name: apache2
+        enabled: true
+        state: started
+
+    - name: Create WebServer index.html file
+      copy:
+        src: "{{ page_data[inventory_hostname] }}"
+        dest: /var/www/html/index.html
